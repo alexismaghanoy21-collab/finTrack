@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>finTrack | Personal Wealth Intelligence</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --vibrant-blue: #007bff;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text-heading: #0f172a;
+            --text-body: #475569;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --input-focus: rgba(37, 99, 235, 0.1);
+            --particle: #2563eb;
+            --radius: 16px;
+            --placeholder: #94a3b8;
+            --glow-primary: rgba(37, 99, 235, 0.35);
+            --glow-soft: rgba(37, 99, 235, 0.12);
+        }
+
+        body.dark-mode {
+            --bg: #020617;
+            --card: rgba(15, 23, 42, 0.9);
+            --text-heading: #f1f5f9;
+            --text-body: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --input-focus: rgba(59, 130, 246, 0.2);
+            --particle: #60a5fa;
+            --placeholder: #64748b;
+            --glow-primary: rgba(96, 165, 250, 0.4);
+            --glow-soft: rgba(96, 165, 250, 0.1);
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            background-color: var(--bg);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--text-body);
+            transition: background-color 0.4s ease, color 0.4s ease;
+            overflow-x: hidden;
+        }
+
+        p, .hero-desc { color: var(--text-body) !important; transition: color 0.4s ease; }
+        .text-muted, .small { color: var(--text-muted) !important; transition: color 0.4s ease; }
+        .brand, .hero-title, .form-label, h3 { color: var(--text-heading); transition: color 0.4s ease; }
+
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.3; }
+
+        /* ── Ambient glow orbs ───────────────────── */
+        .glow-orb {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(80px);
+            opacity: 0;
+            animation: orbFadeIn 1.5s ease forwards;
+        }
+        .glow-orb-1 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(37,99,235,0.18) 0%, transparent 70%);
+            top: -100px; left: -100px;
+            animation-delay: 0.3s;
+        }
+        .glow-orb-2 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(99,102,241,0.14) 0%, transparent 70%);
+            bottom: -80px; right: 10%;
+            animation-delay: 0.6s;
+        }
+        .glow-orb-3 {
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(37,99,235,0.1) 0%, transparent 70%);
+            top: 40%; left: 40%;
+            animation-delay: 0.9s;
+        }
+        @keyframes orbFadeIn { to { opacity: 1; } }
+
+        /* ── Theme toggle ────────────────────────── */
+        .theme-toggle {
+            position: fixed; bottom: 30px; right: 30px; z-index: 1000;
+            background: var(--card); border: 1px solid var(--border);
+            color: var(--text-heading); width: 56px; height: 56px;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; cursor: grab; backdrop-filter: blur(8px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 0 0 0 var(--glow-primary);
+            user-select: none; touch-action: none;
+            transition: box-shadow 0.3s ease;
+        }
+        .theme-toggle:hover {
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 0 20px 4px var(--glow-soft);
+        }
+
+        /* ── Nav ─────────────────────────────────── */
+        .top-nav {
+            position: absolute; top: 0; width: 100%; padding: 2.5rem 4%;
+            display: flex; justify-content: space-between; align-items: center; z-index: 10;
+            opacity: 0;
+            animation: slideDownFade 0.7s ease 0.1s forwards;
+        }
+        .brand { font-weight: 800; font-size: 1.75rem; letter-spacing: -1px; }
+        .brand span { color: var(--primary); }
+
+        /* ── Hero left col ───────────────────────── */
+        .landing-wrapper { min-height: 100vh; width: 100%; display: flex; align-items: center; padding: 0 6%; position: relative; z-index: 1; }
+
+        .hero-title {
+            font-size: clamp(3rem, 7vw, 5rem); font-weight: 800;
+            letter-spacing: -0.04em; line-height: 1.05; margin-bottom: 1.5rem;
+            opacity: 0;
+            animation: slideUpFade 0.8s ease 0.4s forwards;
+        }
+        .hero-title span { color: var(--primary); }
+
+        .trust-badge {
+            display: inline-flex; align-items: center; padding: 0.6rem 1.2rem;
+            background: var(--input-focus); border-radius: 100px;
+            color: var(--primary); font-size: 0.8rem; font-weight: 700; margin-bottom: 2rem;
+            opacity: 0;
+            animation: slideUpFade 0.7s ease 0.2s forwards;
+            box-shadow: 0 0 0 0 var(--glow-primary);
+            transition: box-shadow 0.3s ease;
+        }
+        .trust-badge:hover {
+            box-shadow: 0 0 16px 4px var(--glow-soft);
+        }
+
+        .hero-desc {
+            font-size: 1.25rem; line-height: 1.6; max-width: 600px; margin-bottom: 2.5rem;
+            opacity: 0;
+            animation: slideUpFade 0.8s ease 0.55s forwards;
+        }
+
+        .feature-mini {
+            display: flex; align-items: center; gap: 1rem; margin-top: 2rem;
+            padding: 1.2rem; border-radius: 12px; border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03); color: var(--text-heading);
+            opacity: 0;
+            animation: slideUpFade 0.8s ease 0.7s forwards;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+        }
+        .feature-mini:nth-child(2) { animation-delay: 0.85s; }
+        .feature-mini:hover {
+            border-color: rgba(37,99,235,0.3);
+            box-shadow: 0 0 20px 2px var(--glow-soft), inset 0 0 20px rgba(37,99,235,0.04);
+            transform: translateY(-2px);
+        }
+        .feature-mini i {
+            filter: drop-shadow(0 0 6px var(--glow-primary));
+        }
+
+        /* ── Login Card ──────────────────────────── */
+        .login-card {
+            background: var(--card); backdrop-filter: blur(16px);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            position: relative; overflow: hidden;
+            box-shadow:
+                0 25px 50px -12px rgba(0,0,0,0.1),
+                0 0 0 0 var(--glow-primary);
+            width: 100%; max-width: 500px; margin-left: auto;
+            transition: height 0.5s cubic-bezier(0.4,0,0.2,1), box-shadow 0.4s ease;
+            height: auto;
+            opacity: 0;
+            animation: slideLeftFade 0.9s cubic-bezier(0.22,1,0.36,1) 0.5s forwards;
+        }
+        .login-card:hover {
+            box-shadow:
+                0 25px 50px -12px rgba(0,0,0,0.15),
+                0 0 40px 8px var(--glow-soft);
+        }
+
+        /* Glowing top border accent */
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0;
+            animation: glowLineFadeIn 1s ease 1.2s forwards;
+            z-index: 2;
+        }
+        @keyframes glowLineFadeIn {
+            to { opacity: 1; }
+        }
+
+        /* Inner glow pulse on card */
+        .login-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            background: radial-gradient(ellipse at 50% 0%, var(--glow-soft) 0%, transparent 60%);
+            pointer-events: none;
+            opacity: 0;
+            animation: innerGlowFadeIn 1s ease 1.4s forwards;
+            z-index: 0;
+        }
+        @keyframes innerGlowFadeIn { to { opacity: 1; } }
+
+        .form-shifter { display: flex; width: 200%; transition: transform 0.6s cubic-bezier(0.7,0,0.3,1); }
+        .form-panel { width: 50%; padding: clamp(2rem, 5vh, 3.5rem); position: relative; z-index: 1; transition: opacity 0.4s ease; }
+        .show-register .form-shifter { transform: translateX(-50%); }
+
+        .loading-progress {
+            position: absolute; top: 0; left: 0; height: 4px; width: 0;
+            background: linear-gradient(90deg, var(--primary), #60a5fa, var(--primary));
+            background-size: 200% 100%;
+            border-radius: 16px 16px 0 0;
+            transition: width 0.4s cubic-bezier(0.1,0.7,1.0,0.1);
+            z-index: 5;
+            box-shadow: 0 0 8px 2px var(--glow-primary);
+            animation: shimmer 1.5s linear infinite;
+        }
+        @keyframes shimmer { to { background-position: -200% 0; } }
+
+        .form-label { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem; display: block; }
+
+        /* Glowing input focus */
+        .form-control {
+            background: transparent; border: 1.5px solid var(--border);
+            border-radius: 12px; padding: 1rem 1.2rem;
+            color: var(--text-heading); transition: 0.25s ease;
+        }
+        .form-control::placeholder { color: var(--placeholder); opacity: 1; }
+        .form-control:focus {
+            background: transparent;
+            border-color: var(--primary);
+            box-shadow:
+                0 0 0 4px var(--input-focus),
+                0 0 16px 2px var(--glow-soft);
+            color: var(--text-heading);
+            outline: none;
+        }
+
+        .btn-primary-custom {
+            background: var(--primary); color: white !important;
+            border: none; border-radius: 12px; padding: 1.2rem;
+            font-weight: 700; width: 100%; transition: 0.3s ease;
+            margin-top: 1rem; display: flex; justify-content: center; align-items: center; gap: 10px;
+            position: relative; overflow: hidden;
+            box-shadow: 0 4px 15px -3px var(--glow-primary);
+        }
+        /* Shine sweep on hover */
+        .btn-primary-custom::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 60%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .btn-primary-custom:hover::before { left: 150%; }
+        .btn-primary-custom:hover {
+            background: var(--primary-hover); color: white !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px -5px var(--glow-primary), 0 0 20px 4px var(--glow-soft);
+        }
+        .btn-primary-custom:active { transform: translateY(0); }
+
+        /* ── Keyframe animations ─────────────────── */
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideDownFade {
+            from { opacity: 0; transform: translateY(-20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideLeftFade {
+            from { opacity: 0; transform: translateX(40px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Form field staggered entrance (triggered by JS class) */
+        .form-field-animate {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.45s ease, transform 0.45s ease;
+        }
+        .form-field-animate.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Panel heading entrance */
+        .panel-heading {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .panel-heading.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── Cursor glow dot ─────────────────────── */
+        #cursor-glow {
+            position: fixed;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--glow-soft) 0%, transparent 70%);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            transition: left 0.12s ease, top 0.12s ease, opacity 0.3s ease;
+            z-index: 0;
+            opacity: 0;
+        }
+
+        @media (max-width: 991px) {
+            .landing-wrapper { padding-top: 120px; padding-bottom: 80px; text-align: center; }
+            .hero-desc { margin-left: auto; margin-right: auto; }
+            .login-card { margin-right: auto; margin-left: auto; }
+            #cursor-glow { display: none; }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Ambient glow orbs -->
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+    <div class="glow-orb glow-orb-3"></div>
+
+    <!-- Cursor glow -->
+    <div id="cursor-glow"></div>
+
+    <div class="theme-toggle" id="themeToggle">
+        <i class="fa-solid fa-moon" id="themeIcon"></i>
+    </div>
+
+    <nav class="top-nav">
+        <div class="brand">fin<span>Track.</span></div>
+    </nav>
+
+    <div class="container-fluid landing-wrapper">
+        <div class="row w-100 align-items-center">
+            <div class="col-lg-6">
+                <div class="trust-badge">
+                    <i class="fa-solid fa-vault me-2"></i> FINANCIAL MANAGEMENT
+                </div>
+                <h1 class="hero-title">Master Your <br>Capital <span>Flow.</span></h1>
+                <p class="hero-desc">
+                    A high-performance repository designed to manage personal finance and track where every cent goes.
+                </p>
+
+                <div class="d-none d-lg-flex gap-4">
+                    <div class="feature-mini">
+                        <i class="fa-solid fa-chart-line text-primary"></i>
+                        <span class="small fw-bold">Real-Time Expense Tracking</span>
+                    </div>
+                    <div class="feature-mini">
+                        <i class="fa-solid fa-layer-group text-primary"></i>
+                        <span class="small fw-bold">Automated Asset Categorization</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="login-card" id="loginCard">
+                    <div class="loading-progress" id="loadingBar"></div>
+
+                    <div class="form-shifter" id="formShifter">
+                        <!-- Login Panel -->
+                        <div class="form-panel" id="loginPanel">
+                            <div class="mb-5 text-center panel-heading" id="loginHeading">
+                                <h3 class="fw-extrabold mb-2" style="color: var(--vibrant-blue);">Login Here</h3>
+                                <p class="small text-muted">Start Managing Your Finances Now!</p>
+                            </div>
+
+                            <form action="auth/login_process.php" method="POST" class="auth-form">
+                                <div class="mb-4 form-field-animate">
+                                    <label class="form-label">Email Address</label>
+                                    <input type="email" name="email" class="form-control" placeholder="Enter your email" required>
+                                </div>
+                                <div class="mb-4 form-field-animate">
+                                    <div class="d-flex justify-content-between">
+                                        <label class="form-label">Password</label>
+                                        <a href="forgot_password.php" class="small text-decoration-none fw-bold" style="font-size: 0.7rem; color: var(--primary);">FORGOT PASSWORD?</a>
+                                    </div>
+                                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                                </div>
+                                <div class="form-field-animate">
+                                    <button type="submit" class="btn btn-primary-custom">
+                                        <span>AUTHENTICATE</span>
+                                        <div class="spinner-border spinner-border-sm d-none" role="status"></div>
+                                    </button>
+                                </div>
+                            </form>
+
+                            <div class="mt-4 text-center form-field-animate">
+                                <p class="small text-muted mb-0">Don't have an account yet?
+                                    <a href="#" id="showRegister" class="fw-bold text-primary text-decoration-none">Register Here.</a>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Register Panel -->
+                        <div class="form-panel" id="registerPanel">
+                            <div class="mb-5 text-center panel-heading" id="registerHeading">
+                                <h3 class="fw-extrabold text-heading mb-2">Join finTrack</h3>
+                                <p class="small text-muted">Create your secure wealth repository.</p>
+                            </div>
+
+                            <form action="auth/register_process.php" method="POST" class="auth-form">
+                                <div class="mb-3 form-field-animate">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" name="full_name" class="form-control" placeholder="Enter full name" required>
+                                </div>
+                                <div class="mb-3 form-field-animate">
+                                    <label class="form-label">Email Address</label>
+                                    <input type="email" name="email" class="form-control" placeholder="name@example.com" required>
+                                </div>
+                                <div class="mb-3 form-field-animate">
+                                    <label class="form-label">Set Password</label>
+                                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                                </div>
+                                <div class="form-field-animate">
+                                    <button type="submit" class="btn btn-primary-custom">
+                                        <span>CREATE ACCOUNT</span>
+                                        <div class="spinner-border spinner-border-sm d-none" role="status"></div>
+                                    </button>
+                                </div>
+                            </form>
+
+                            <div class="mt-4 text-center form-field-animate">
+                                <p class="small text-muted mb-0">Already a member?
+                                    <a href="#" id="showLogin" class="fw-bold text-primary text-decoration-none">Login Here.</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ── Cursor glow tracker ────────────────────────
+    const cursorGlow = document.getElementById('cursor-glow');
+    let cursorVisible = false;
+    document.addEventListener('mousemove', (e) => {
+        cursorGlow.style.left = e.clientX + 'px';
+        cursorGlow.style.top  = e.clientY + 'px';
+        if (!cursorVisible) { cursorGlow.style.opacity = '1'; cursorVisible = true; }
+    });
+    document.addEventListener('mouseleave', () => { cursorGlow.style.opacity = '0'; cursorVisible = false; });
+
+    // ── Draggable theme toggle ─────────────────────
+    const dragElement = document.getElementById('themeToggle');
+    let isDragging = false, startX, startY, initialX, initialY;
+
+    dragElement.addEventListener('mousedown', startDragging);
+    dragElement.addEventListener('touchstart', startDragging, { passive: false });
+
+    function startDragging(e) {
+        isDragging = false;
+        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+        startX = clientX; startY = clientY;
+        const rect = dragElement.getBoundingClientRect();
+        initialX = rect.left; initialY = rect.top;
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag, { passive: false });
+        document.addEventListener('mouseup', stopDragging);
+        document.addEventListener('touchend', stopDragging);
+    }
+
+    function drag(e) {
+        isDragging = true; e.preventDefault();
+        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+        dragElement.style.left   = `${initialX + clientX - startX}px`;
+        dragElement.style.top    = `${initialY + clientY - startY}px`;
+        dragElement.style.bottom = 'auto';
+        dragElement.style.right  = 'auto';
+    }
+
+    function stopDragging() {
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('touchmove', drag);
+        document.removeEventListener('mouseup', stopDragging);
+        document.removeEventListener('touchend', stopDragging);
+    }
+
+    // ── Theme persistence ──────────────────────────
+    const themeIcon = document.getElementById('themeIcon');
+    const body = document.body;
+    const setDarkMode = (isDark) => {
+        body.classList.toggle('dark-mode', isDark);
+        themeIcon.classList.replace(isDark ? 'fa-moon' : 'fa-sun', isDark ? 'fa-sun' : 'fa-moon');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    };
+    if (localStorage.getItem('theme') === 'dark') setDarkMode(true);
+    dragElement.addEventListener('click', () => { if (!isDragging) setDarkMode(!body.classList.contains('dark-mode')); });
+
+    // ── Staggered field entrance ───────────────────
+    function animateFields(panel) {
+        const heading = panel.querySelector('.panel-heading');
+        const fields  = panel.querySelectorAll('.form-field-animate');
+
+        if (heading) {
+            setTimeout(() => heading.classList.add('visible'), 80);
+        }
+        fields.forEach((el, i) => {
+            setTimeout(() => el.classList.add('visible'), 180 + i * 90);
+        });
+    }
+
+    // ── Card height + sliding ─────────────────────
+    const loginCard     = document.getElementById('loginCard');
+    const showRegister  = document.getElementById('showRegister');
+    const showLogin     = document.getElementById('showLogin');
+    const loginPanel    = document.getElementById('loginPanel');
+    const registerPanel = document.getElementById('registerPanel');
+
+    const adjustHeight = () => {
+        const activePanel = loginCard.classList.contains('show-register') ? registerPanel : loginPanel;
+        loginCard.style.height = activePanel.scrollHeight + 'px';
+    };
+
+    showRegister.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginCard.classList.add('show-register');
+
+        // Reset register fields
+        registerPanel.querySelectorAll('.form-field-animate').forEach(el => el.classList.remove('visible'));
+        const rh = registerPanel.querySelector('.panel-heading');
+        if (rh) rh.classList.remove('visible');
+
+        setTimeout(() => {
+            adjustHeight();
+            animateFields(registerPanel);
+        }, 60);
+    });
+
+    showLogin.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginCard.classList.remove('show-register');
+
+        loginPanel.querySelectorAll('.form-field-animate').forEach(el => el.classList.remove('visible'));
+        const lh = loginPanel.querySelector('.panel-heading');
+        if (lh) lh.classList.remove('visible');
+
+        setTimeout(() => {
+            adjustHeight();
+            animateFields(loginPanel);
+        }, 60);
+    });
+
+    window.addEventListener('load', () => {
+        adjustHeight();
+        // Trigger login panel entrance after card animation lands
+        setTimeout(() => animateFields(loginPanel), 900);
+    });
+    window.addEventListener('resize', adjustHeight);
+
+    // ── Loading progress bar ───────────────────────
+    const loadingBar = document.getElementById('loadingBar');
+    document.querySelectorAll('.auth-form').forEach(form => {
+        form.addEventListener('submit', function () {
+            const btn     = this.querySelector('.btn-primary-custom');
+            const text    = btn.querySelector('span');
+            const spinner = btn.querySelector('.spinner-border');
+            loadingBar.style.width = '100%';
+            text.innerText = 'PROCESSING...';
+            spinner.classList.remove('d-none');
+            btn.disabled = true;
+        });
+    });
+
+    // ── Particle background ────────────────────────
+    const canvas = document.getElementById('bg-canvas');
+    const ctx    = canvas.getContext('2d');
+    let particles = [];
+
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Particle {
+        constructor() { this.reset(); }
+        reset() {
+            this.x      = Math.random() * canvas.width;
+            this.y      = Math.random() * canvas.height;
+            this.size   = Math.random() * 2 + 0.5;
+            this.speedX = Math.random() * 0.4 - 0.2;
+            this.speedY = Math.random() * 0.4 - 0.2;
+            this.life   = Math.random();
+            this.maxLife = Math.random() * 0.5 + 0.5;
+        }
+        update() {
+            this.x    += this.speedX;
+            this.y    += this.speedY;
+            this.life += 0.003;
+            if (this.x > canvas.width)  this.x = 0;
+            if (this.x < 0)             this.x = canvas.width;
+            if (this.y > canvas.height) this.y = 0;
+            if (this.y < 0)             this.y = canvas.height;
+            if (this.life > this.maxLife) this.reset();
+        }
+        draw() {
+            const color   = getComputedStyle(document.documentElement).getPropertyValue('--particle').trim();
+            const opacity = Math.sin((this.life / this.maxLife) * Math.PI) * 0.25;
+            ctx.globalAlpha = opacity;
+            ctx.fillStyle = color;
+            ctx.shadowColor = color;
+            ctx.shadowBlur  = 6;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    // Connection lines between close particles
+    function drawConnections() {
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx   = particles[i].x - particles[j].x;
+                const dy   = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 100) {
+                    const color = getComputedStyle(document.documentElement).getPropertyValue('--particle').trim();
+                    ctx.globalAlpha = (1 - dist / 100) * 0.06;
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth   = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    function init()    { for (let i = 0; i < 80; i++) particles.push(new Particle()); }
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawConnections();
+        particles.forEach(p => { p.update(); p.draw(); });
+        ctx.globalAlpha = 1;
+        requestAnimationFrame(animate);
+    }
+    init(); animate();
+    </script>
+</body>
+
+</html>
